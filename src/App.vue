@@ -21,7 +21,7 @@
 
 <script>
 import Serial from './components/Serial';
-// import Serial from './components/Serial.vue';
+// const serialport = require('serialport');
 
 export default {
   name: 'App',
@@ -33,5 +33,8 @@ export default {
   data: () => ({
     //
   }),
+  methods: {
+    
+  },
 };
 </script>
