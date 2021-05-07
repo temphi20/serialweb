@@ -1,28 +1,37 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+  <v-app>
+    <!-- <v-card> -->
+      <v-app-bar
+      color="beidge"
+      absolute
+      flat
+      dense
+      >
+        <v-app-bar-nav-icon></v-app-bar-nav-icon>
+      </v-app-bar>
+    <!-- </v-card> -->
+
+    <v-main
+    :style="{marginTop: '100px'}"
+    >
+      <Serial/>
+    </v-main>
+  </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import Serial from './components/Serial';
+// import Serial from './components/Serial.vue';
 
 export default {
   name: 'App',
-  components: {
-    HelloWorld
-  }
-}
-</script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
+  components: {
+    Serial,
+  },
+
+  data: () => ({
+    //
+  }),
+};
+</script>
