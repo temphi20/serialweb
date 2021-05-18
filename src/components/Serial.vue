@@ -1,161 +1,101 @@
 <template>
   <v-container>
-    <!-- <v-card
-    :style="{padding: '20px'}"
-    outlined
-    >
-      <p>Port: 
-      <v-text-field v-model="port"
-      :rules="rules"
-      hide-details="auto"
-      ></v-text-field></p>
-      <p>Baud rate: 
-      <v-text-field v-model="baud"
-      :rules="rules"
-      hide-details="auto"
-      ></v-text-field></p>
-      <v-btn
-      @click="openPort"
-      v-text='Open'
-      color="primary"
-      depressed
-      ></v-btn>
-    </v-card> -->
     <v-card
     :style="{padding: '20px'}"
     outlined
     >
-      <v-col>
-        <!-- <v-menu
-          offset-y
-        >
-          <template v-slot:activator="{ attrs, on }">
+      <!-- <template> -->
+      <v-container fluid>
+        <v-row align="center">
+          <v-col>
+            <v-select
+            id="v-port"
+            v-model="vPort"
+            :items="portList"
+            label="Select port:"
+            dense
+            return-object
+            ></v-select>
+          </v-col>
+          <v-col>
+            <v-select
+            v-model="vBaud"
+            :items="baudList"
+            label="Select baud rate:"
+            dense
+            >
+            {{ this.portInfo.options.baudRate }}
+            </v-select>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col align="right">
             <v-btn
-              color="primary"
-              v-bind="attrs"
-              v-on="on"
-              @click="setPortNum"
+            fab
+            small
+            depressed
+            color="primary"
+            @click="setPortInfo"
+            :style="{marginRight: '10px'}"
             >
-            Port Number
+              <v-icon>autorenew</v-icon>
             </v-btn>
-          </template>
-          <v-list>
-            <v-list-item
-              v-for="com in portList"
-              :key="com"
-              link
-            >
-              <v-list-item-title v-text="com"></v-list-item-title>
-            </v-list-item>
-            </v-list>
-        </v-menu> -->
-
-        <!-- <v-menu
-          offset-y
-        >
-          <template v-slot:activator="{ attrs, on }">
             <v-btn
-              color="primary"
-              v-bind="attrs"
-              v-on="on"
-              @click="setBaudRate"
+            fab
+            small
+            depressed
+            color="primary"
+            @click="openPort"
             >
-            Baud Rate
+              <v-icon>power_settings_new</v-icon>
             </v-btn>
-          </template>
-          <v-list>
-            <v-list-item
-              v-for="baud in baudList"
-              :key="baud"
-              link
-            >
-              <v-list-item-title v-text="baud"></v-list-item-title>
-            </v-list-item>
-            </v-list>
-        </v-menu> -->
-      </v-col>
-      <p>Port Number: {{ this.portInfo.portNum }}</p>
-      <p>Baud Rate: {{ this.portInfo.options.baudRate }}</p>
-      <v-btn
-      fab
-      small
-      color="primary"
-      @click="openPort"
-      >
-        <v-icon>
-          mdi-plus
-        </v-icon>
-    </v-btn>
+          </v-col>
+        </v-row>
+      </v-container>
     </v-card>
 
-    <v-col>
-      <v-card
-      :style="{padding: '20px'}"
-      outlined
+    <v-card
+    :style="{marginTop: '10px', padding: '20px'}"
+    outlined
+    >
+      <h4>Recive data:</h4>
+      <div
+      v-for="(data, idx) in vBuffer"
+      :key="idx"
       >
-          <p>{{ this.portInfo.buffer[0] }}</p>
-      </v-card>
-    </v-col>
-
-    <!-- <v-row>
-        <v-col
-        v-for="n in 2"
-        :key="n"
-        align="center"
-        >
-            <v-card
-            :style="{padding: '20px'}"
-            outlined
-            >
-                <div>
-                    <v-text-field
-                    :rules="rules"
-                    hide-details="auto"
-                    ></v-text-field>
-                    <v-btn
-                    :style="{marginTop: '20px'}"
-                    v-text="butt[n-1].name"
-                    color="primary"
-                    depressed
-                    ></v-btn>
-                </div>
-            </v-card>
-        </v-col>
-    </v-row> -->
-    
+      {{ data }}
+      </div>
+    </v-card>
   </v-container>
 </template>
 
 <script>
-// import Port from '../api/port';
 const remote = window.electron.remote;
 const SerialPort = remote.getGlobal('SerialPort');
 
-// if(port !== null){
-//   port.write('1');
-// }
+const Buffer = require('../api/buffer');
 
   export default {
     name: 'Serial',
 
     data: () => ({
+      vPort: '',
+      vBaud: '',
+      vBuffer: [],
+      
       port: null,
-      portList: null,
+      portList: [],
       baudList: [ 2400, 4800, 9600, 19200, 38400, 57600, 115200 ],
-      options: {  
-                    baudRate: 9600,
-                    parity: 'none',
-                    dataBits: 8,
-                    stopBits: 1,
-                    autoOpen: false
-                },
       portInfo: {
         portNum: 'COM1',
+        isRecv: false,
+        isRead: false,
         options: {
           baudRate: 115200,
           autoOpen: false,
         },
-        buffer: [],
+        buffer: null,
+        bufferLen: 0,
       },
     }),
 
@@ -164,52 +104,123 @@ const SerialPort = remote.getGlobal('SerialPort');
 
     methods: {
       genRenderer(){
+        this.destroyPort();
+        this.genPortList();
+        this.vBaud = this.baudList[6];
         console.log("load success");
+      },
+      genPortList() {
+        SerialPort.list()
+        .then((ports) => {
+            for(let i in ports){ this.portList.push(ports[i].path); }
+            if(this.portList.length < 1){ this.portList.push('null'); }
+            this.vPort = this.portList[0];
+          })
+        .catch((err) => { console.log(`genPortList =>\n${err}`); })
       },
 
       setPortInfo(){
-        this.portInfo.portNum;
-        this.portInfo.options.baudRate;
-        this.portInfo.buffer = [];
+        // this.closePort();
+        this.destroyPort();
+        console.log(this.vPort);
+        this.portInfo.portNum = this.vPort;
+        this.portInfo.options.baudRate = this.vBaud;
+        if(this.portInfo.buffer){ this.portInfo.buffer.clear(); }
       },
 
       openPort(){
-        // const remote = window.electron.remote;
-        // const SerialPort = remote.getGlobal('SerialPort');
-        let port = this.port;
-        if(port) { this.closePort(); }
-        port = new SerialPort('COM1', this.options,null)
+        if(this.port !== null){
+          alert(`Port open => Plz open after port setting or destroy`);
+          return console.log(`Port open => Plz open after port setting or destroy`);
+        }
+        this.port = new SerialPort(this.portInfo.portNum, this.portInfo.options);
 
-        port.open((err) => {
-          if(err){ return console.log(`openPort(port.open) =>\n${err}`); }
+        this.port.open((err) => {
+          if(err){
+            return console.log(`openPort(port.open) =>\n${err}`);
+          }
         });
 
-        port.on('open', () => {
-          console.log(port.isOpen);
+        this.port.on('open', () => {
+          console.log(`Port open => ${this.port.isOpen}`);
+          this.portInfo.buffer = new Buffer();
+          this.bufferLen = 0;
         })
 
-        console.log(port);
-        port.on('error', (err) => {
-          if(err){ console.log(`openPort(port.on.error) =>\n${err}`); }
+        this.port.on('error', (err) => {
+          if(err && this.port!==null){
+            console.log(`openPort(port.on.error) =>\n${err}`);
+          }
         });
 
-        port.on('data', (data) => {
-          this.portInfo.buffer.push(data);
-          // setTimeout(() => {}, 1000);
+        this.port.on('data', (data) => {
+          const tmp = data.toString();
+
+          switch(tmp){
+            case '0':
+              this.portInfo.isRecv = false;
+              this.portInfo.isRead = false;
+              this.portInfo.buffer.clear();
+              this.vBuffer = [];
+              break;
+            case '1':
+              this.portInfo.isRecv = true;
+              break;
+            default:
+              if(!this.portInfo.isRecv){
+                alert(`openPort(port.on.data) => Send righ signal`);
+                console.log(`openPort(port.on.data) => Send righ signal`);
+              }
+          }
+
+          if(this.portInfo.isRead){
+            this.portInfo.buffer.enBuffer(tmp);
+            // this.portInfo.buffer.printData();
+            this.vBuffer.push(tmp);
+          }
+
+          if(this.portInfo.isRecv){ this.portInfo.isRead = true; }
+          else { this.portInfo.isRead = false; }
+
+          console.log(`recv msg: ${tmp}`);
         })
       },
-      closePort(){
-        let port = this.port;
-        if(port){
-          try{
-            if(port.isOpen){ port.close(); }
-            else { this.genPort(); }
-          }
-          catch(err){ console.log(`closePort =>\n${err}`); }
+      // closePort(){
+      //   if(this.port){
+      //     try{
+      //       if(this.port.isOpen){
+      //         console.log('close port');
+      //         this.port.close();
+      //         // this.portInfo.buffer.clear();
+      //         this.portInfo.buffer = null;
+      //       }
+      //     }
+      //     catch(err){ console.log(`closePort =>\n${err}`); }
+      //   }
+      // },
+      destroyPort(){
+        if(this.portInfo.isRecv || this.portInfo.isRead){
+          alert(`destroyPort => Refresh port setting after reciving 0 signal`);
+          return console.log(`destroyPort => Refresh port setting after reciving 0 signal`);
         }
+        if(this.port !== null) {
+          this.port.close();
+          this.port = null;
+          alert(`destroyPort => Success closing port`);
+          console.log(`destroyPort => Success closing port`);
+        }
+        this.portInfo.buffer = null;
+        console.log(`destroyPort`);
       }
     },
     
+    watch: {
+      // isDisable: () => {
+      //   if(this.isDisable){
+      //     document.getElementById('v-port').disabled();
+      //   }
+      // }
+    },
 
     mounted() {
       this.genRenderer();
