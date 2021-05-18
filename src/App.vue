@@ -21,6 +21,8 @@
 
 <script>
 import Serial from './components/Serial';
+// window.electron = require('electron');
+// import Port from './api/port';
 // const serialport = require('serialport');
 
 export default {
@@ -31,10 +33,8 @@ export default {
   },
 
   data: () => ({
-    //
   }),
   methods: {
-    
   },
 };
 </script>

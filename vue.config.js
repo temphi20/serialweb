@@ -4,7 +4,8 @@ module.exports = {
   ],
   pluginOptions: {
     electronBuilder: {
-      externals: ['serialport']
+      externals: ['serialport'],
+      nodeModulesPath: ['../../node_modules', './node_modules']
     }
   },
 }

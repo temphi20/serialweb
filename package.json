@@ -2,8 +2,11 @@
   "name": "serialweb",
   "version": "0.1.0",
   "private": true,
+  "buildDependenciesFromSource": true,
   "scripts": {
+    "start": "electron .",
     "install": "electron-rebuild",
+    "rebuild": "./node_modules/.bin/electron-rebuild -f -w serialport",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
@@ -14,6 +17,7 @@
   },
   "main": "background.js",
   "dependencies": {
+    "@serialport/bindings": "^9.0.7",
     "core-js": "^3.6.5",
     "serialport": "^9.0.7",
     "vue": "^2.6.11",
