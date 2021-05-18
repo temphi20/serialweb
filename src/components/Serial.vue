@@ -9,7 +9,6 @@
         <v-row align="center">
           <v-col>
             <v-select
-            id="v-port"
             v-model="vPort"
             :items="portList"
             label="Select port:"
@@ -27,9 +26,28 @@
             {{ this.portInfo.options.baudRate }}
             </v-select>
           </v-col>
+          <v-col>
+            <v-select
+            v-model="vSig"
+            :items="signalList"
+            label="Select senging signal:"
+            dense
+            return-object
+            ></v-select>
+          </v-col>
         </v-row>
         <v-row>
           <v-col align="right">
+            <v-btn
+            fab
+            small
+            depressed
+            color="normal"
+            @click="sendSignal"
+            :style="{marginRight: '10px'}"
+            >
+              <v-icon>send</v-icon>
+            </v-btn>
             <v-btn
             fab
             small
@@ -81,11 +99,13 @@ const Buffer = require('../api/buffer');
     data: () => ({
       vPort: '',
       vBaud: '',
+      vSig: '',
       vBuffer: [],
       
       port: null,
       portList: [],
       baudList: [ 2400, 4800, 9600, 19200, 38400, 57600, 115200 ],
+      signalList: [ '0', '1' ],
       portInfo: {
         portNum: 'COM1',
         isRecv: false,
@@ -106,6 +126,7 @@ const Buffer = require('../api/buffer');
       genRenderer(){
         this.destroyPort();
         this.genPortList();
+        this.vSig = this.signalList[1];
         this.vBaud = this.baudList[6];
         console.log("load success");
       },
@@ -117,6 +138,15 @@ const Buffer = require('../api/buffer');
             this.vPort = this.portList[0];
           })
         .catch((err) => { console.log(`genPortList =>\n${err}`); })
+      },
+
+      sendSignal(){
+        if(this.port === null){
+          alert(`sendSignal => Port is not open`);
+          return console.log(`sendSignal => Port is not open`);
+        }
+        console.log(this.vSig);
+        this.port.write(this.vSig.toString());
       },
 
       setPortInfo(){
